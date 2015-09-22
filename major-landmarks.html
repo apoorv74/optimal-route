@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Randy Olson uses machine learning to find the optimal road trip across the U.S.">
+    <meta name="author" content="Randal S. Olson">
+    
+    <title>The optimal road trip across the U.S. according to machine learning</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+      #panel {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        margin-left: -180px;
+        z-index: 5;
+        background-color: #fff;
+        padding: 10px;
+        border: 1px solid #999;
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true"></script>
+    <script>
+    var routes_list = []
+    var markerOptions = {icon: "http://maps.gstatic.com/mapfiles/markers2/marker.png"};
+    var directionsDisplayOptions = {preserveViewport: true,
+                    markerOptions: markerOptions};
+    var directionsService = new google.maps.DirectionsService();
+    var map;
+
+    function initialize() {
+      var center = new google.maps.LatLng(21, 85);
+      var mapOptions = {
+      zoom: 5,
+      center: center
+      };
+      map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+      for (i=0; i<routes_list.length; i++) {
+        routes_list[i].setMap(map); 
+      }
+    }
+
+    function calcRoute(start, end, routes) {
+      
+      var directionsDisplay = new google.maps.DirectionsRenderer(directionsDisplayOptions);
+
+      var waypts = [];
+      for (var i = 0; i < routes.length; i++) {
+        waypts.push({
+          location:routes[i],
+          stopover:true});
+        }
+      
+      var request = {
+        origin: start,
+        destination: end,
+        waypoints: waypts,
+        optimizeWaypoints: false,
+        travelMode: google.maps.TravelMode.DRIVING
+      };
+
+      directionsService.route(request, function(response, status) {
+      if (status == google.maps.DirectionsStatus.OK) {
+        directionsDisplay.setDirections(response);    
+      }
+      });
+
+      routes_list.push(directionsDisplay);
+    }
+
+    function createRoutes(route) {
+      // Google's free map API is limited to 10 waypoints so need to break into batches
+      route.push(route[0]);
+      var subset = 0;
+      while (subset < route.length) {
+        var waypointSubset = route.slice(subset, subset + 10);
+
+        var startPoint = waypointSubset[0];
+        var midPoints = waypointSubset.slice(1, waypointSubset.length - 1);
+        var endPoint = waypointSubset[waypointSubset.length - 1];
+
+        calcRoute(startPoint, endPoint, midPoints);
+
+        subset += 9;
+      }
+    }
+
+    optimal_route = ['4, Laidi Rd, Jhekariya, Rajasthan 341304, India',
+    'Bhartiya Rd, Naya Bass, Churu, Rajasthan 331001, India','Ganderbal',
+    'Gulmarg, Jammu and Kashmir','Panchrukhi - Paprola Rd, Panchrukhi, Himachal Pradesh 176103, India',
+    'Ghatasani-Barot Rd, Lachkandi, Himachal Pradesh 175013, India','NH21, Dhungri Village, Manali, Himachal Pradesh 175131, India',
+    'Tehri Rd, Landour, Mussoorie, Uttarakhand 248122, India','NH72A, Jhanda Mohalla, Dehradun, Uttarakhand 248001, India',
+    'Nehru Colony Rd, Nehru Colony, Dalanwala, Dehradun, Uttarakhand 248001, India','Lansdowne Market Rd, Lansdowne, Uttarakhand 246155, India',
+    'Unnamed Road, Sona Nadi Range, Uttarakhand 246142, India','Jhandi Dhar - Binsar Sanctuary Gate Rd, Uttarakhand, India',
+    'Kaladhungi Rd, Haldwani, Uttarakhand 263126, India','Pedestrain Overpass, LNUPE Campus, Kampoo, Gwalior, Madhya Pradesh 474002, India',
+    'Ranchi-Patna Rd, Mandu, Jharkhand 825316, India','USS Road, Bolpur, West Bengal 731204, India','SH 11, Gokarna, West Bengal 742136, India',
+    'Gandhi Road, Limbugaon, Darjeeling, West Bengal 734101, India','AT Rd, Golaghat, Mohpara, Assam 785609, India','Beldal-Puri Rd, Puri, Odisha, India',
+    'Nidumolu-Kuchipudi Rd, Kuchipudi, Andhra Pradesh 521136, India','NH234, Vasanthapuram, Balaji Nagar, Vellore, Tamil Nadu 632004, India',
+    'Big Bazaar St, Melakottaivasal, Nagore, Nagapattinam, Tamil Nadu 611003, India','45/1, Chennai Road, Bairagi Thoppu, Kumbakonam, Tamil Nadu 612001, India',
+    'Road Inside Old Bus Stand, Rajakrisnapuram, Thanjavur, Tamil Nadu 613001, India','Kochi - Dhanushkodi Rd, Rail Marutham Nagar, Simmakkal, Madurai Main, Madurai, Tamil Nadu 625001, India',
+    'Laws Ghat Rd, Kodaikanal, Tamil Nadu 624101, India','Country Spa Rd, Vizhinjam, Kovalam, Kerala 695527, India','63/3441, Aroor - Thoppumpady Rd, Valummel, Kochi, Kerala 682005, India',
+    '63/3441, Aroor - Thoppumpady Rd, Valummel, Kochi, Kerala 682005, India','Bus Stand Rd, Valparai, Tamil Nadu 642127, India','Via Portiuncula, Kotagiri, Tamil Nadu 643201, India',
+    'SH 21, Halebeedu, Karnataka 573121, India','Bangalore - Mangalore Hwy, Sakleshpur, Karnataka 573134, India','Shishila Rd, Arasinamakki, Hathyadka, Karnataka 574229, India',
+    'NH17, Siraj Nagar, Kasaragod, Kerala 671123, India','Kundapur - Agumbe Hwy, Agumbe, Karnataka 577411, India','Jali Rd, Devinagar, Bhatkal, Karnataka 581320, India',
+    'Honnemaradu Rd, Honnemaradu, Karnataka 577421, India','SH 7, Bandoli, Goa 403706, India','SH 7, Bandoli, Goa 403706, India','Unnamed Road, Bardez, Goa 403513, India',
+    'NH4, Yashodanagar, Powai Naka, Satara, Maharashtra 415004, India','Fort JadhavGadh Rd, Jadhavwadi, Maharashtra 412301, India','3388, Handewadi Rd, Satav Nagar, Undri, Pune, Maharashtra 411028, India',
+    '128, Ramganesh Gadkari Path, Shobhapur, Kasba Peth, Pune, Maharashtra 411011, India','128, Ramganesh Gadkari Path, Shobhapur, Kasba Peth, Pune, Maharashtra 411011, India',
+    '192, CST Road, Friends Colony, Kismat Nagar, Kurla West, Mumbai, Maharashtra 400070, India','MP Shah Cir (Sat Rasta Circle), Valkeshwari, Park Colony, Jamnagar, Gujarat 361008, India',
+    'Jubilee Cir, Ghanshyam Nagar, Bhuj, Gujarat 370001, India','5, Ashram Rd, Ellisbridge, Ahmedabad, Gujarat 380006, India','Unnamed Road, Talab, Rajasthan 313604, India',
+    'Tambavati Marg, Shabri Colony, Ganesh Nagar, Udaipur, Rajasthan 313001, India','MDR53, Ram Kund, Jaisalmer, Rajasthan 345001, India']
+    
+    createRoutes(optimal_route);
+
+    google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+  </body>
+</html>
